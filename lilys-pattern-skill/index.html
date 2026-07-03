@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LilysAI 패턴 재현 스킬 - 설명서</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, "Segoe UI", "Malgun Gothic", sans-serif; background:#ffffff; color:#1a1a1a; line-height:1.7; }
+  .layout { display:flex; min-height:100vh; }
+  nav.sidebar { width:280px; background:#fafafa; border-right:1px solid #e5e5e5; padding:24px 0; position:sticky; top:0; height:100vh; overflow-y:auto; flex-shrink:0; }
+  nav.sidebar h2 { font-size:14px; color:#888; padding:8px 24px; margin-top:16px; text-transform:uppercase; letter-spacing:0.5px; }
+  nav.sidebar a { display:block; padding:8px 24px; color:#333; text-decoration:none; font-size:14px; border-left:3px solid transparent; }
+  nav.sidebar a:hover { background:#f0f0f0; border-left-color:#4a7dff; }
+  nav.sidebar .logo { padding:0 24px 16px; font-weight:700; font-size:18px; border-bottom:1px solid #e5e5e5; margin-bottom:8px; }
+  main { flex:1; padding:48px 64px; max-width:900px; background:#ffffff; }
+  main h1 { font-size:32px; margin-bottom:8px; }
+  main h2.section { font-size:24px; margin:48px 0 16px; padding-bottom:8px; border-bottom:2px solid #4a7dff; scroll-margin-top:24px; }
+  main h3 { font-size:18px; margin:24px 0 8px; }
+  main p { margin-bottom:12px; }
+  main ul { margin:8px 0 16px 24px; }
+  main li { margin-bottom:6px; }
+  code { background:#f4f4f4; padding:2px 6px; border-radius:4px; font-family:Consolas,monospace; font-size:13px; }
+  pre { background:#f8f8f8; border:1px solid #e5e5e5; border-radius:8px; padding:16px; overflow-x:auto; margin:12px 0; font-size:13px; }
+  pre code { background:none; padding:0; }
+  .badge { display:inline-block; background:#eef3ff; color:#4a7dff; padding:2px 8px; border-radius:12px; font-size:12px; margin-right:6px; }
+  .note { background:#fffbe6; border-left:4px solid #ffd666; padding:12px 16px; border-radius:4px; margin:12px 0; }
+  table { border-collapse:collapse; width:100%; margin:12px 0; }
+  th,td { border:1px solid #e5e5e5; padding:8px 12px; text-align:left; font-size:14px; }
+  th { background:#fafafa; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="logo">Lilys 패턴 스킬</div>
+    <h2>개요</h2>
+    <a href="#intro">1. 이 프로젝트가 뭔가요</a>
+    <a href="#structure">2. 폴더 구조</a>
+    <h2>규칙 분석</h2>
+    <a href="#how-summary">3. 요약 4종 규칙</a>
+    <a href="#how-extend">4. 확장 리포트 규칙</a>
+    <a href="#how-custom">5. 커스텀 옵션</a>
+    <a href="#how-followup">6. 추천질문 3개 규칙</a>
+    <a href="#how-search">7. 검색이 걸리는 경우</a>
+    <a href="#how-image">8. 화면 그림 처리</a>
+    <h2>사용법</h2>
+    <a href="#usage">9. 스킬 사용 방법</a>
+    <a href="#files">10. 파일 목록</a>
+  </nav>
+  <main>
+    <h1>LilysAI 패턴 재현 스킬</h1>
+    <p>유튜브 스크립트 하나만 주면 릴리처럼 <b>요약 4종 + 확장 리포트 + 추천질문 3개</b>를 자동 생성하는 스킬입니다. 릴리에 접속하지 않고 Claude / Claude Code에서 동일한 정리물을 만듭니다.</p>
+    <h2 class="section" id="intro">1. 이 프로젝트가 뭔가요</h2>
+    <p>LilysAI(릴리스AI)가 유튜브 영상을 요약·확장하는 방식을 관찰·역설계하여, 같은 결과를 로컬에서 재현할 수 있게 만든 스킬 패키지입니다. 핵심 발견은 릴리의 모든 요약/확장이 내부적으로 <b>[스크립트 전문] + [고정 프롬프트] -&gt; LLM -&gt; 포맷된 결과물</b> 구조라는 점입니다. ("나만의 템플릿 만들기"가 <code>이름</code> + <code>프롬프트</code> 딱 두 입력만 받는 것으로 확인됨.)</p>
+    <h2 class="section" id="structure">2. 폴더 구조</h2>
+    <pre><code>lilys-pattern-skill/
+|- index.html              (이 설명 문서)
+|- 대화내용/
+|   |- 대화내용.md          (지금까지의 전체 대화 기록)
+|- skill/
+    |- SKILL.md            (스킬 정의/진입점)
+    |- templates/          (요약/확장/추천질문 프롬프트들)
+    |- run.py              (실행 스크립트, 프레임 추출 옵션 포함)</code></pre>
+    <h2 class="section" id="how-summary">3. 요약 4종 규칙</h2>
+    <p>짧게 · 기본 · 길게 · 쉽게 - 이 넷은 <b>정보 출처가 아니라 압축률과 말투만</b> 다릅니다. 넷 다 스크립트 안에서만 생성되며, 모든 문장에 스크립트 타임스탬프 인용 <code>[숫자]</code>가 붙습니다.</p>
+    <table>
+      <tr><th>옵션</th><th>특징</th></tr>
+      <tr><td>짧게</td><td>핵심 불릿 몇 개로 최대 압축</td></tr>
+      <tr><td>기본</td><td>표준 요약 (소제목 + 불릿)</td></tr>
+      <tr><td>길게</td><td>소제목 + 세부 항목(a,b,c)까지 촘촘하게</td></tr>
+      <tr><td>쉽게</td><td>반말·비유체로 쉽게 풀어씀</td></tr>
+    </table>
+    <h2 class="section" id="how-extend">4. 확장 리포트 규칙</h2>
+    <p>확장은 카테고리별 고정 프롬프트 템플릿입니다.</p>
+    <ul>
+      <li><span class="badge">더 깊이 이해하기</span> 관련 배경지식, 반대 시각 조사, 액션아이템 도출, 댓글분석</li>
+      <li><span class="badge">시각자료</span> 애니메이션, 인포그래픽</li>
+      <li><span class="badge">이해 점검</span> 플래시카드, 퀴즈, 팟캐스트</li>
+      <li><span class="badge">문서형식</span> 교재, 보고서, 회의록, 사용자 인터뷰, 문헌검토, 논문 리뷰 등</li>
+    </ul>
+    <h2 class="section" id="how-custom">5. 커스텀 옵션</h2>
+    <p>릴리의 "나만의 템플릿 만들기"와 동일하게, <code>이름</code> + <code>프롬프트</code>만 정의하면 새 확장을 추가할 수 있습니다. <code>templates/ext_custom.md</code>를 복제해서 프롬프트만 바꾸면 됩니다.</p>
+    <h2 class="section" id="how-followup">6. 추천질문 3개 규칙</h2>
+    <p>매 답변 뒤에 붙는 추천질문 3개는 <b>직전 답변의 하위 주제를, 사용자 1인칭 반말("~알려줘", "~보여줘")로</b> 생성합니다. <code>templates/followup_questions.md</code> 참고.</p>
+    <h2 class="section" id="how-search">7. 검색이 걸리는 경우</h2>
+    <p>스크립트 안에서 답할 수 있으면 검색하지 않습니다. <b>스크립트에 없는 새 외부 개념/고유명사가 처음 등장할 때만</b> 웹 검색을 1회 수행하고, 이후 후속 질문은 확보한 자료+스크립트로 답합니다. "관련 배경지식", "반대 시각 조사" 템플릿에만 웹검색 도구를 연결하세요.</p>
+    <h2 class="section" id="how-image">8. 화면 그림 처리</h2>
+    <p>자막에 없고 화면에만 나오는 다이어그램은 텍스트만으론 복원 불가입니다. <code>run.py</code>가 장면 전환 프레임을 추출 후 비전 모델로 설명을 붙입니다. 새 그림 생성은 <b>Codex 이미지 2.0 스킬</b>을 호출하도록 자리를 비워뒀습니다(SKILL.md에서 나중에 직접 수정).</p>
+    <h2 class="section" id="usage">9. 스킬 사용 방법</h2>
+    <pre><code># Claude Code에서 skill 폴더를 프로젝트에 두고:
+"이 유튜브 스크립트를 lilys 패턴으로 정리해줘"
+
+# 또는 스크립트로
+python skill/run.py --input script.txt --outdir ./output</code></pre>
+    <h2 class="section" id="files">10. 파일 목록</h2>
+    <ul>
+      <li><code>skill/SKILL.md</code> - 스킬 진입점 / 전체 규칙</li>
+      <li><code>skill/templates/summary_*.md</code> - 요약 4종</li>
+      <li><code>skill/templates/ext_*.md</code> - 확장 리포트들 + 커스텀</li>
+      <li><code>skill/templates/followup_questions.md</code> - 추천질문 3개</li>
+      <li><code>skill/run.py</code> - 실행 스크립트</li>
+      <li><code>대화내용/대화내용.md</code> - 전체 대화 기록</li>
+    </ul>
+    <div class="note">Codex 이미지 2.0 스킬 호출 부분은 일반 형태로 넣어뒀습니다. PC에 있는 실제 스킬 이름으로 나중에 바꿔주세요.</div>
+  </main>
+</div>
+</body>
+</html>
